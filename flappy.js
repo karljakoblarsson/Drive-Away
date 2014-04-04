@@ -22,10 +22,14 @@ var state = {
         y: h/2,
     },
     obstacles: {
-      a: 1,
         halfWidth: 10,
+        number: 0,
     },
 };
+
+state.obstacles[0] = getObstacleCorners(100, 0.5, 250);
+state.obstacles[1] = getObstacleCorners(500, 0.7, 100);
+state.obstacles.number = 2;
 
 var prevTime = 0;
 
@@ -38,11 +42,9 @@ function draw(t) {
       c.fillStyle = "#FF00EE";
       c.fillRect(state.pos.x -10, state.pos.y -10, 20, 20);
       
-      // debug
-      obs = getObstacleCorners(200, 0.3, 200);
-      debugger;
-      drawObstacle(obs);
-      debugger;
+      for(var i = 0; i < state.obstacles.number; i++) {
+        drawObstacle(state.obstacles[i]);
+      }
       
       c.font = "12pt Arial";
       c.fillStyle = "#000";
@@ -59,6 +61,7 @@ function drawObstacle(obstacle) {
   c.fillRect(bot[0], bot[1], state.obstacles.halfWidth, bot[3]); // bottom
 }
 
+// Corners return a simple array [left, top, right, bottom]
 function getObstacleCorners(x, holePos, holeSize) {
   var halfWidth = state.obstacles.halfWidth;
   
@@ -66,6 +69,26 @@ function getObstacleCorners(x, holePos, holeSize) {
     top: [x - halfWidth, 0, x + halfWidth, holePos*h - holeSize/2],
     bottom: [x - halfWidth, holePos*h + holeSize/2, x + halfWidth, h],
   };
+}
+
+function getPlayerCorners() {
+  return [state.pos.x -10, state.pos.y -10, state.pos.x +10, state.pos.y +10];
+}
+
+function intersect(a, b) {
+  return (a[0] <= b[2] &&
+          b[0] <= a[2] &&
+          a[1] <= b[3] &&
+          b[1] <= a[3])
+}
+
+function checkIfPlayerIntersect() {
+  var intersects = false;
+  for(var i = 0; i < state.obstacles.number; i++) {
+    intersects = intersects || intersect(state.obstacles[i].top, getPlayerCorners()) ||
+                               intersect(state.obstacles[i].bottom, getPlayerCorners())
+  }
+  return intersects;
 }
 
 function newGame() {
@@ -82,18 +105,15 @@ function newGame() {
 
 function update(t, dt) {
   
-  if (key.up()) state.pos.y--;
-  if (key.left()) state.pos.x--;
-  if (key.down()) state.pos.y++;
-  if (key.right()) state.pos.x++;
-  
-  if ( (state.gameover) && key.space()) {
-    newGame();
-  }
-  
-  if (outOfBounds(state.pos)) {
-    state.gameover = true;
-  }
+    
+  if ( (state.gameover) && key.space()) newGame();
+  else if (checkIfPlayerIntersect()) state.gameover = true;
+  else if (outOfBounds(state.pos)) state.gameover = true;
+  else if (key.up()) state.pos.y -= 3;
+  else if (key.left()) state.pos.x -= 3;
+  else if (key.down()) state.pos.y += 3;
+  else if (key.right()) state.pos.x += 3;
+
 }
 
 function drawGameover() {
