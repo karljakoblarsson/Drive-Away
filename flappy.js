@@ -24,15 +24,14 @@ var state = {
     },
     obstacle: {
         halfWidth: 10*pixRat,
+        speed: 3,
+        spacing: 1 - 0.22,
     },
     obstacles: {}
 };
 
 // var oneObstacle = {x: 270, holePos: 0.7, holeSize: 0.3};
-
 state.obstacles[0] = randObstacle();
-//state.obstacles[1] = getObstacleCorners(500, 0.7, 100);
-//state.obstacles.number = 2;
 
 var prevTime = 0;
 
@@ -56,12 +55,48 @@ function draw(t) {
     }
 }
 
-function randObstacle() {
-  return {x: rand(20, w - 20), holePos: rand(0.2,0.7), holeSize: rand(75, 400)};
+function update(t, dt) {  
+    
+  if ( (state.gameover) && key.space()) newGame();
+  else if (checkIfPlayerIntersect()) state.gameover = true;
+  else if (outOfBounds(state.pos)) state.gameover = true;
+  else if (key.up()) state.pos.y -= 3;
+  else if (key.left()) state.pos.x -= 3;
+  else if (key.down()) state.pos.y += 3;
+  else if (key.right()) state.pos.x += 3;
+  
+  for(var k in state.obstacles) {
+    if (state.obstacles[k].x < 0) delete(state.obstacles[k]);
+  }
+  loopObstacles(function(obst) {obst.x -= state.obstacle.speed;});
+  if (rightMost() < (w * state.obstacle.spacing)) addObstacle(t);
+
 }
 
-function addObstacle(hej) {
-  state.obstacles[12] = {x: w - 20, holePos: rand(0.2, 0.7), holeSize: rand(0.1, 0.9)};
+function randObstacle() {
+  return {x: w + state.obstacle.halfWidth, holePos: rand(0.2,0.7), holeSize: rand(75, 400)};
+}
+
+function addObstacle(t) {
+  state.obstacles[t] = randObstacle();
+}
+
+function loopObstacles(fn) {
+  for(var k in state.obstacles) {
+    fn(state.obstacles[k]);
+  }
+}
+
+function noOfObst() {
+  var no = 0;
+  loopObstacles(function() {no++;});
+  return no;
+}
+
+function rightMost() {
+  maxX = 0;
+  loopObstacles(function(obst) {if (obst.x > maxX) maxX = obst.x;});
+  return maxX;
 }
 
 function drawObstacle(obstacle) {
@@ -112,7 +147,9 @@ function newGame() {
         x: w/2,
         y: h/2,
     },
-  //state.obstacle = {};
+  state.obstacles = {};
+  addObstacle(1);
+  
   state.startTime = null;
 }
 
@@ -149,20 +186,6 @@ function render(time) {
 newGame();
 var animId = requestAnimationFrame(render);
 
-
-
-function update(t, dt) {
-  
-    
-  if ( (state.gameover) && key.space()) newGame();
-  else if (checkIfPlayerIntersect()) state.gameover = true;
-  else if (outOfBounds(state.pos)) state.gameover = true;
-  else if (key.up()) state.pos.y -= 3;
-  else if (key.left()) state.pos.x -= 3;
-  else if (key.down()) state.pos.y += 3;
-  else if (key.right()) state.pos.x += 3;
-
-}
 
 // ----- keys ---------------------------
 
