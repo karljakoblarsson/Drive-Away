@@ -1,9 +1,27 @@
+/* Flappy Summer Internship (Resumé game)
+ * Karl Jakob Larsson Spring 2014
+ * MIT License
+ */
+ 
+/* ---- TODO ----
+ * Physics (Gravity!!!)
+ * High score
+ * Graphics
+ * Sound
+ */
 
 // All units in SI (seconds, pixels, meters etc) unless otherwise noted.
+
+
+// ---- Init????asasgasd???lize ----
 
 var canvas = document.getElementById("a");
 canvas.width *= window.devicePixelRatio; // high-dpi adjustment
 canvas.height *= window.devicePixelRatio;
+
+
+// --- Convinience ----
+
 var pixRat = window.devicePixelRatio;
 var c = canvas.getContext("2d");
 
@@ -13,8 +31,8 @@ var rand = function(min, max) {
 var w = canvas.width;
 var h = canvas.height;
 
-// Constants
-var obstacleHoleSize = 70;
+
+// ---- Setup ----
 
 var state = {
     gameover: false,
@@ -36,6 +54,8 @@ state.obstacles[0] = randObstacle();
 var prevTime = 0;
 
 
+// ---- Main game-functions ----
+
 function draw(t) {
     if (state.gameover) {
       drawGameover();
@@ -56,15 +76,19 @@ function draw(t) {
 }
 
 function update(t, dt) {  
-    
+  
+  // Check the gamestate  
   if ( (state.gameover) && key.space()) newGame();
   else if (checkIfPlayerIntersect()) state.gameover = true;
   else if (outOfBounds(state.pos)) state.gameover = true;
-  else if (key.up()) state.pos.y -= 3;
-  else if (key.left()) state.pos.x -= 3;
-  else if (key.down()) state.pos.y += 3;
-  else if (key.right()) state.pos.x += 3;
   
+  // Input
+  if (key.up()) state.pos.y -= 3;
+  if (key.left()) state.pos.x -= 3;
+  if (key.down()) state.pos.y += 3;
+  if (key.right()) state.pos.x += 3;
+  
+  // The Obstacles
   for(var k in state.obstacles) {
     if (state.obstacles[k].x < 0) delete(state.obstacles[k]);
   }
@@ -73,6 +97,8 @@ function update(t, dt) {
 
 }
 
+
+// ---- Obstacle functions ----
 function randObstacle() {
   return {x: w + state.obstacle.halfWidth, holePos: rand(0.2,0.7), holeSize: rand(75, 400)};
 }
@@ -108,7 +134,7 @@ function drawObstacle(obstacle) {
   c.fillRect(bot[0], bot[1], state.obstacle.halfWidth*2, bot[3]); // bottom
 }
 
-// Corners return a simple array [left, top, right, bottom]
+// Corners return a simple array [left, top, right, bottom] for the top and bottom rect.
 function getObstacleCorners(obst) {
   var halfWidth = state.obstacle.halfWidth;
   
@@ -117,6 +143,9 @@ function getObstacleCorners(obst) {
     bottom: [obst.x - halfWidth, obst.holePos*h + obst.holeSize/2, obst.x + halfWidth, h],
   };
 }
+
+
+// ---- Intersection functions ----
 
 function getPlayerCorners() {
   return [state.pos.x -10, state.pos.y -10, state.pos.x +10, state.pos.y +10];
@@ -139,6 +168,13 @@ function checkIfPlayerIntersect() {
   return intersects;
 }
 
+function outOfBounds(p) {
+  return ((p.x < 0) ||  (p.x > w) || (p.y < 0) || (p.y > h));
+}
+
+
+// ---- Gamestate functions ----
+
 function newGame() {
   c.clearRect(0,0,w,h);
   c.fillStyle = "#FF00EE";
@@ -152,6 +188,9 @@ function newGame() {
   
   state.startTime = null;
 }
+
+
+// ---- Drawing functions ----
 
 function drawGameover() {
   c.clearRect(0,0,w,h);
@@ -167,11 +206,8 @@ function drawGameover() {
   c.fillText("Press space for new game.", w/4, 2*h/3);
 }
 
-function outOfBounds(p) {
-  return ((p.x < 0) ||  (p.x > w) || (p.y < 0) || (p.y > h));
-}
 
-// ----- play --------------------------
+// ---- Run! ----
 
 function render(time) {
     if (state.startTime === null) state.startTime = time;
@@ -187,7 +223,7 @@ newGame();
 var animId = requestAnimationFrame(render);
 
 
-// ----- keys ---------------------------
+// ---- Input handler ----
 
 var key = {
   _pressed: {},
