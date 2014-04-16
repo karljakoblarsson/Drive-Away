@@ -22,31 +22,20 @@ var state = {
         x: w/2,
         y: h/2,
     },
-    obstacles: {
+    obstacle: {
         halfWidth: 10*pixRat,
-        number: 0,
     },
+    obstacles: {}
 };
 
-//state.obstacles[0] = randObstacle();
+// var oneObstacle = {x: 270, holePos: 0.7, holeSize: 0.3};
+
+state.obstacles[0] = randObstacle();
 //state.obstacles[1] = getObstacleCorners(500, 0.7, 100);
 //state.obstacles.number = 2;
 
 var prevTime = 0;
 
-
-function update(t, dt) {
-  
-    
-  if ( (state.gameover) && key.space()) newGame();
-  else if (checkIfPlayerIntersect()) state.gameover = true;
-  else if (outOfBounds(state.pos)) state.gameover = true;
-  else if (key.up()) state.pos.y -= 3;
-  else if (key.left()) state.pos.x -= 3;
-  else if (key.down()) state.pos.y += 3;
-  else if (key.right()) state.pos.x += 3;
-
-}
 
 function draw(t) {
     if (state.gameover) {
@@ -56,8 +45,9 @@ function draw(t) {
       c.fillStyle = "#FF00EE";
       c.fillRect(state.pos.x -10, state.pos.y -10, 20, 20);
       
-      for(var i = 0; i < state.obstacles.number; i++) {
-        drawObstacle(state.obstacles[i]);
+      
+      for(var k in state.obstacles) {
+        drawObstacle(getObstacleCorners(state.obstacles[k]));
       }
       
       c.font = "12pt Arial";
@@ -67,11 +57,11 @@ function draw(t) {
 }
 
 function randObstacle() {
-  return getObstacleCorners(rand(20, w - 20), rand(0.2,0.7), rand(75, 400));
+  return {x: rand(20, w - 20), holePos: rand(0.2,0.7), holeSize: rand(75, 400)};
 }
 
-function addObstacle() {
-  
+function addObstacle(hej) {
+  state.obstacles[12] = {x: w - 20, holePos: rand(0.2, 0.7), holeSize: rand(0.1, 0.9)};
 }
 
 function drawObstacle(obstacle) {
@@ -79,17 +69,17 @@ function drawObstacle(obstacle) {
   var top = obstacle.top;
   var bot = obstacle.bottom;
   
-  c.fillRect(top[0], top[1], state.obstacles.halfWidth*2, top[3]); // top
-  c.fillRect(bot[0], bot[1], state.obstacles.halfWidth*2, bot[3]); // bottom
+  c.fillRect(top[0], top[1], state.obstacle.halfWidth*2, top[3]); // top
+  c.fillRect(bot[0], bot[1], state.obstacle.halfWidth*2, bot[3]); // bottom
 }
 
 // Corners return a simple array [left, top, right, bottom]
-function getObstacleCorners(x, holePos, holeSize) {
-  var halfWidth = state.obstacles.halfWidth;
+function getObstacleCorners(obst) {
+  var halfWidth = state.obstacle.halfWidth;
   
   return {
-    top: [x - halfWidth, 0, x + halfWidth, holePos*h - holeSize/2],
-    bottom: [x - halfWidth, holePos*h + holeSize/2, x + halfWidth, h],
+    top: [obst.x - halfWidth, 0, obst.x + halfWidth, obst.holePos*h - obst.holeSize/2],
+    bottom: [obst.x - halfWidth, obst.holePos*h + obst.holeSize/2, obst.x + halfWidth, h],
   };
 }
 
@@ -106,9 +96,10 @@ function intersect(a, b) {
 
 function checkIfPlayerIntersect() {
   var intersects = false;
-  for(var i = 0; i < state.obstacles.number; i++) {
-    intersects = intersects || intersect(state.obstacles[i].top, getPlayerCorners()) ||
-                               intersect(state.obstacles[i].bottom, getPlayerCorners())
+  for(var k in state.obstacles) {
+    var obs = getObstacleCorners(state.obstacles[k]) 
+    intersects = intersects || intersect(obs.top, getPlayerCorners()) ||
+                               intersect(obs.bottom, getPlayerCorners())
   }
   return intersects;
 }
@@ -121,7 +112,7 @@ function newGame() {
         x: w/2,
         y: h/2,
     },
-  //state.obstacles = {};
+  //state.obstacle = {};
   state.startTime = null;
 }
 
@@ -158,9 +149,24 @@ function render(time) {
 newGame();
 var animId = requestAnimationFrame(render);
 
+
+
+function update(t, dt) {
+  
+    
+  if ( (state.gameover) && key.space()) newGame();
+  else if (checkIfPlayerIntersect()) state.gameover = true;
+  else if (outOfBounds(state.pos)) state.gameover = true;
+  else if (key.up()) state.pos.y -= 3;
+  else if (key.left()) state.pos.x -= 3;
+  else if (key.down()) state.pos.y += 3;
+  else if (key.right()) state.pos.x += 3;
+
+}
+
 // ----- keys ---------------------------
 
-key = {
+var key = {
   _pressed: {},
 
   LEFT: 37,
