@@ -4,6 +4,7 @@
 var canvas = document.getElementById("a");
 canvas.width *= window.devicePixelRatio; // high-dpi adjustment
 canvas.height *= window.devicePixelRatio;
+var pixRat = window.devicePixelRatio;
 var c = canvas.getContext("2d");
 
 var rand = function(min, max) {
@@ -22,17 +23,30 @@ var state = {
         y: h/2,
     },
     obstacles: {
-        halfWidth: 10,
+        halfWidth: 10*pixRat,
         number: 0,
     },
 };
 
-state.obstacles[0] = getObstacleCorners(100, 0.5, 250);
-state.obstacles[1] = getObstacleCorners(500, 0.7, 100);
-state.obstacles.number = 2;
+//state.obstacles[0] = randObstacle();
+//state.obstacles[1] = getObstacleCorners(500, 0.7, 100);
+//state.obstacles.number = 2;
 
 var prevTime = 0;
 
+
+function update(t, dt) {
+  
+    
+  if ( (state.gameover) && key.space()) newGame();
+  else if (checkIfPlayerIntersect()) state.gameover = true;
+  else if (outOfBounds(state.pos)) state.gameover = true;
+  else if (key.up()) state.pos.y -= 3;
+  else if (key.left()) state.pos.x -= 3;
+  else if (key.down()) state.pos.y += 3;
+  else if (key.right()) state.pos.x += 3;
+
+}
 
 function draw(t) {
     if (state.gameover) {
@@ -52,13 +66,21 @@ function draw(t) {
     }
 }
 
+function randObstacle() {
+  return getObstacleCorners(rand(20, w - 20), rand(0.2,0.7), rand(75, 400));
+}
+
+function addObstacle() {
+  
+}
+
 function drawObstacle(obstacle) {
   c.fillStyle = "#060";
   var top = obstacle.top;
   var bot = obstacle.bottom;
   
-  c.fillRect(top[0], top[1], state.obstacles.halfWidth, top[3]); // top
-  c.fillRect(bot[0], bot[1], state.obstacles.halfWidth, bot[3]); // bottom
+  c.fillRect(top[0], top[1], state.obstacles.halfWidth*2, top[3]); // top
+  c.fillRect(bot[0], bot[1], state.obstacles.halfWidth*2, bot[3]); // bottom
 }
 
 // Corners return a simple array [left, top, right, bottom]
@@ -103,19 +125,6 @@ function newGame() {
   state.startTime = null;
 }
 
-function update(t, dt) {
-  
-    
-  if ( (state.gameover) && key.space()) newGame();
-  else if (checkIfPlayerIntersect()) state.gameover = true;
-  else if (outOfBounds(state.pos)) state.gameover = true;
-  else if (key.up()) state.pos.y -= 3;
-  else if (key.left()) state.pos.x -= 3;
-  else if (key.down()) state.pos.y += 3;
-  else if (key.right()) state.pos.x += 3;
-
-}
-
 function drawGameover() {
   c.clearRect(0,0,w,h);
   c.fillStyle = "#333";
@@ -134,6 +143,8 @@ function outOfBounds(p) {
   return ((p.x < 0) ||  (p.x > w) || (p.y < 0) || (p.y > h));
 }
 
+// ----- play --------------------------
+
 function render(time) {
     if (state.startTime === null) state.startTime = time;
     var deltaTime = time - prevTime;
@@ -146,6 +157,8 @@ function render(time) {
 
 newGame();
 var animId = requestAnimationFrame(render);
+
+// ----- keys ---------------------------
 
 key = {
   _pressed: {},

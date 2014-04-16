@@ -1,7 +1,7 @@
 /* Flappy Summer Internship by Karl Jakob Larsson */
 
 body {
-    background-color: #555533;
+    background-color: #FDF;
 }
 
 canvas {
@@ -19,5 +19,5 @@ canvas {
     width: 600px;
     margin-left: auto;
     margin-right: auto;
-    margin-top: 20%;
+    margin-top: 20px;
 }
