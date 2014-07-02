@@ -1,13 +1,16 @@
 /* Flappy Summer Internship (Resumé game)
  * Karl Jakob Larsson Spring 2014
+ * <k.jakob.larsson@gmail.com>
  * MIT License
  */
  
 /* ---- TODO ----
- * Physics (Gravity!!!)
- * High score
+ * Max speed
+ * High score (done-ish)
  * Graphics
  * Sound
+ * Overlay text
+ * CV
  */
 
 // All units in SI (seconds, pixels, meters etc) unless otherwise noted.
@@ -36,14 +39,29 @@ var h = canvas.height;
 
 var state = {
     gameover: false,
+    score: 0,
+    highscore: 0,
     pos: {
-        x: w/2,
+        x: w/4,
         y: h/2,
     },
+    vel: {
+      x: 0,
+      y: 0,
+    },
+    acc: {
+      x: 0,
+      y: 0,
+    },
+    acceleration : 0.0007,
+    accelerationUp: 0.004,
+    maxVelX: 0.5,
+    maxVelY: 0.3,
+    gravity: 0.0007,
     obstacle: {
         halfWidth: 10*pixRat,
-        speed: 3,
-        spacing: 1 - 0.22,
+        speed: 1.4,
+        spacing: 1 - 0.32,
     },
     obstacles: {}
 };
@@ -72,6 +90,7 @@ function draw(t) {
       c.font = "12pt Arial";
       c.fillStyle = "#000";
       c.fillText(t - state.startTime, 10, 10);
+      c.fillText("Score: " + state.score, w - 70, 15);
     }
 }
 
@@ -83,24 +102,45 @@ function update(t, dt) {
   else if (outOfBounds(state.pos)) state.gameover = true;
   
   // Input
-  if (key.up()) state.pos.y -= 3;
-  if (key.left()) state.pos.x -= 3;
-  if (key.down()) state.pos.y += 3;
-  if (key.right()) state.pos.x += 3;
+  if (key.up()) {
+    state.acc.y = -state.accelerationUp;
+  } else if (key.down()) {
+    state.acc.y = state.acceleration;
+  } else {
+    state.acc.y = 0;
+  }
+  
+  if (key.left()) {
+    state.acc.x = -state.acceleration;
+  } else if (key.right()) {
+    state.acc.x = state.acceleration;
+  } else {
+    state.acc.x = 0;
+  }
+  
+  state.acc.y += state.gravity;
+
+  
+  state.vel.x += state.acc.x * dt;
+  state.vel.y += state.acc.y * dt;
+    
+  state.pos.x += state.vel.x * dt;
+  state.pos.y += state.vel.y * dt;
   
   // The Obstacles
   for(var k in state.obstacles) {
-    if (state.obstacles[k].x < 0) delete(state.obstacles[k]);
+    if (state.obstacles[k].x < 0) { delete(state.obstacles[k]); state.score += 1;}
   }
   loopObstacles(function(obst) {obst.x -= state.obstacle.speed;});
   if (rightMost() < (w * state.obstacle.spacing)) addObstacle(t);
-
+  
+  
 }
 
 
 // ---- Obstacle functions ----
 function randObstacle() {
-  return {x: w + state.obstacle.halfWidth, holePos: rand(0.2,0.7), holeSize: rand(75, 400)};
+  return {x: w + state.obstacle.halfWidth, holePos: rand(0.2,0.7), holeSize: rand(120, 400)};
 }
 
 function addObstacle(t) {
@@ -180,9 +220,12 @@ function newGame() {
   c.fillStyle = "#FF00EE";
   state.gameover = false;
   state.pos = {
-        x: w/2,
+        x: w/5,
         y: h/2,
     },
+  state.vel = { x: 0, y: 0},
+  state.acc = { x: 0, y: 0},
+  state.score = 0;
   state.obstacles = {};
   addObstacle(1);
   
