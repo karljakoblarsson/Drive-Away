@@ -7,6 +7,7 @@
 /* ---- TODO ----
  * Max speed
  * High score (done-ish)
+ * Split 'state' into state and parameters.
  * Graphics
  * Sound
  * Overlay text
@@ -40,9 +41,10 @@ var h = canvas.height;
 var state = {
     gameover: false,
     score: 0,
+    passedObst: 0, // Used for counting score.
     highscore: 0,
     pos: {
-        x: w/4,
+        x: 6*w/7,
         y: h/2,
     },
     vel: {
@@ -59,8 +61,8 @@ var state = {
     maxVelY: 0.3,
     gravity: 0.0007,
     obstacle: {
-        halfWidth: 10*pixRat,
-        speed: 1.4,
+        halfWidth: 20*pixRat,
+        speed: 1.4*pixRat ,
         spacing: 1 - 0.32,
     },
     obstacles: {}
@@ -87,10 +89,11 @@ function draw(t) {
         drawObstacle(getObstacleCorners(state.obstacles[k]));
       }
       
-      c.font = "12pt Arial";
+      c.font = "24pt Arial";
       c.fillStyle = "#000";
-      c.fillText(t - state.startTime, 10, 10);
-      c.fillText("Score: " + state.score, w - 70, 15);
+      c.fillText(t - state.startTime, 30, 30);
+      c.fillText("Score: " + state.score, w - 140, 30);
+      c.fillText("Highscore: " + state.highscore, w - 440, 30);
     }
 }
 
@@ -127,10 +130,21 @@ function update(t, dt) {
   state.pos.x += state.vel.x * dt;
   state.pos.y += state.vel.y * dt;
   
+  var passedObst = 0;
   // The Obstacles
   for(var k in state.obstacles) {
-    if (state.obstacles[k].x < 0) { delete(state.obstacles[k]); state.score += 1;}
+    if (state.obstacles[k].x < 0) {
+      delete(state.obstacles[k]);
+    } else if (state.obstacles[k].x < state.pos.x) {
+      passedObst += 1;
+    }
   }
+  
+  if (passedObst > state.passedObst) {
+    state.score += 1;
+  }
+  state.passedObst = passedObst;
+  
   loopObstacles(function(obst) {obst.x -= state.obstacle.speed;});
   if (rightMost() < (w * state.obstacle.spacing)) addObstacle(t);
   
@@ -140,7 +154,7 @@ function update(t, dt) {
 
 // ---- Obstacle functions ----
 function randObstacle() {
-  return {x: w + state.obstacle.halfWidth, holePos: rand(0.2,0.7), holeSize: rand(120, 400)};
+  return {x: w + state.obstacle.halfWidth, holePos: rand(0.2,0.7), holeSize: rand(120*pixRat, 400*pixRat)};
 }
 
 function addObstacle(t) {
@@ -220,11 +234,12 @@ function newGame() {
   c.fillStyle = "#FF00EE";
   state.gameover = false;
   state.pos = {
-        x: w/5,
+        x: 3*w/9,
         y: h/2,
-    },
-  state.vel = { x: 0, y: 0},
-  state.acc = { x: 0, y: 0},
+    };
+  state.vel = { x: 0, y: 0};
+  state.acc = { x: 0, y: 0};
+  if (state.highscore < state.score) {state.highscore = state.score;}
   state.score = 0;
   state.obstacles = {};
   addObstacle(1);
