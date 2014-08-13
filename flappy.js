@@ -5,10 +5,11 @@
  */
  
 /* ---- TODO ----
- * Max speed
- * High score (done-ish)
+ * Statemachine and PubSub implementation.
  * Split 'state' into state and parameters.
+ * Use real vector math!!!
  * Graphics (svg?)
+ * Persistent High score
  * Sound
  * Overlay text
  * CV
@@ -32,6 +33,8 @@ var c = canvas.getContext("2d");
 var rand = function(min, max) {
     return Math.random() * (max - min) + min;
 };
+var abs = Math.abs;
+var sign = function(x) {return x/Math.abs(x);}
 var w = canvas.width;
 var h = canvas.height;
 
@@ -56,10 +59,10 @@ var state = {
       y: 0,
     },
     acceleration : 0.0007,
-    accelerationUp: 0.004,
+    accelerationUp: 0.008,
     maxVelX: 0.5,
-    maxVelY: 0.3,
-    gravity: 0.0007,
+    maxVelY: 0.5,
+    gravity: 0.0014,
     obstacle: {
         halfWidth: 20*pixRat,
         speed: 1.4*pixRat ,
@@ -68,6 +71,7 @@ var state = {
     obstacles: {}
 };
 
+// DEF: Obstacle
 // var oneObstacle = {x: 270, holePos: 0.7, holeSize: 0.3};
 state.obstacles[0] = randObstacle();
 
@@ -124,7 +128,10 @@ function update(t, dt) {
   state.acc.y += state.gravity;
 
   state.vel.x += state.acc.x * dt;
-  state.vel.y += state.acc.y * dt;
+  // Ugly!!!
+  // not the absolute of the velocity becuse I want the velocity to be unbounded upwards.
+  // or maybe I don't, but the max should at least be higher in that direction.
+  state.vel.y += (state.vel.y <= state.maxVelY) || (sign(state.vel.y) !== sign(state.acc.y)) ? state.acc.y * dt : 0;
     
   state.obstacle.speed += state.acc.x * dt;
   //state.pos.x += state.vel.x * dt;
@@ -174,7 +181,7 @@ function noOfObst() {
 }
 
 function rightMost() {
-  maxX = 0;
+  var maxX = 0;
   loopObstacles(function(obst) {if (obst.x > maxX) maxX = obst.x;});
   return maxX;
 }
