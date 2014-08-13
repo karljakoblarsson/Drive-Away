@@ -8,7 +8,7 @@
  * Max speed
  * High score (done-ish)
  * Split 'state' into state and parameters.
- * Graphics
+ * Graphics (svg?)
  * Sound
  * Overlay text
  * CV
@@ -123,13 +123,13 @@ function update(t, dt) {
   
   state.acc.y += state.gravity;
 
-  
   state.vel.x += state.acc.x * dt;
   state.vel.y += state.acc.y * dt;
     
-  state.pos.x += state.vel.x * dt;
+  state.obstacle.speed += state.acc.x * dt;
+  //state.pos.x += state.vel.x * dt;
   state.pos.y += state.vel.y * dt;
-  
+    
   var passedObst = 0;
   // The Obstacles
   for(var k in state.obstacles) {
