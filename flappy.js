@@ -6,7 +6,6 @@
  
 /* ---- TODO ----
  * Statemachine and PubSub implementation.
- * Split 'state' into state and parameters.
  * Use real vector math!!!
  * Graphics (svg?)
  * Persistent High score
@@ -41,6 +40,33 @@ var h = canvas.height;
 
 // ---- Setup ----
 
+var parameterSet1 = {
+    acceleration : 0.0007,
+    accelerationUp: 0.008,
+    maxVelX: 0.5,
+    maxVelY: 0.5,
+    gravity: 0.0014,
+    obstacle: {
+        halfWidth: 20*pixRat,
+        speed: 1.4*pixRat ,
+        spacing: 1 - 0.32,
+    },
+};
+var parameterSet2 = {
+    acceleration : 0.0007,
+    accelerationUp: 0.0008,
+    maxVelX: Infinity,
+    maxVelY: Infinity,
+    gravity: 0.0004,
+    obstacle: {
+        halfWidth: 100*pixRat,
+        speed: 1.4*pixRat ,
+        spacing: 1 - 0.62,
+    },
+};
+
+var parameters = parameterSet1;
+
 var state = {
     gameover: false,
     score: 0,
@@ -58,16 +84,7 @@ var state = {
       x: 0,
       y: 0,
     },
-    acceleration : 0.0007,
-    accelerationUp: 0.008,
-    maxVelX: 0.5,
-    maxVelY: 0.5,
-    gravity: 0.0014,
-    obstacle: {
-        halfWidth: 20*pixRat,
-        speed: 1.4*pixRat ,
-        spacing: 1 - 0.32,
-    },
+
     obstacles: {}
 };
 
@@ -110,37 +127,37 @@ function update(t, dt) {
   
   // Input
   if (key.up()) {
-    state.acc.y = -state.accelerationUp;
+    state.acc.y = -parameters.accelerationUp;
   } else if (key.down()) {
-    state.acc.y = state.acceleration;
+    state.acc.y = parameters.acceleration;
   } else {
     state.acc.y = 0;
   }
   
   if (key.left()) {
-    state.acc.x = -state.acceleration;
+    state.acc.x = -parameters.acceleration;
   } else if (key.right()) {
-    state.acc.x = state.acceleration;
+    state.acc.x = parameters.acceleration;
   } else {
     state.acc.x = 0;
   }
   
-  state.acc.y += state.gravity;
+  state.acc.y += parameters.gravity;
 
   state.vel.x += state.acc.x * dt;
   // Ugly!!!
   // not the absolute of the velocity becuse I want the velocity to be unbounded upwards.
   // or maybe I don't, but the max should at least be higher in that direction.
-  state.vel.y += (state.vel.y <= state.maxVelY) || (sign(state.vel.y) !== sign(state.acc.y)) ? state.acc.y * dt : 0;
+  state.vel.y += (state.vel.y <= parameters.maxVelY) || (sign(state.vel.y) !== sign(state.acc.y)) ? state.acc.y * dt : 0;
     
-  state.obstacle.speed += state.acc.x * dt;
+  parameters.obstacle.speed += state.acc.x * dt;
   //state.pos.x += state.vel.x * dt;
   state.pos.y += state.vel.y * dt;
     
   var passedObst = 0;
   // The Obstacles
   for(var k in state.obstacles) {
-    if (state.obstacles[k].x < 0) {
+    if ((state.obstacles[k].x + parameters.obstacle.halfWidth) < 0) {
       delete(state.obstacles[k]);
     } else if (state.obstacles[k].x < state.pos.x) {
       passedObst += 1;
@@ -152,8 +169,8 @@ function update(t, dt) {
   }
   state.passedObst = passedObst;
   
-  loopObstacles(function(obst) {obst.x -= state.obstacle.speed;});
-  if (rightMost() < (w * state.obstacle.spacing)) addObstacle(t);
+  loopObstacles(function(obst) {obst.x -= parameters.obstacle.speed;});
+  if (rightMost() < (w * parameters.obstacle.spacing)) addObstacle(t);
   
   
 }
@@ -161,7 +178,7 @@ function update(t, dt) {
 
 // ---- Obstacle functions ----
 function randObstacle() {
-  return {x: w + state.obstacle.halfWidth, holePos: rand(0.2,0.7), holeSize: rand(120*pixRat, 400*pixRat)};
+  return {x: w + parameters.obstacle.halfWidth, holePos: rand(0.2,0.7), holeSize: rand(120*pixRat, 400*pixRat)};
 }
 
 function addObstacle(t) {
@@ -191,13 +208,13 @@ function drawObstacle(obstacle) {
   var top = obstacle.top;
   var bot = obstacle.bottom;
   
-  c.fillRect(top[0], top[1], state.obstacle.halfWidth*2, top[3]); // top
-  c.fillRect(bot[0], bot[1], state.obstacle.halfWidth*2, bot[3]); // bottom
+  c.fillRect(top[0], top[1], parameters.obstacle.halfWidth*2, top[3]); // top
+  c.fillRect(bot[0], bot[1], parameters.obstacle.halfWidth*2, bot[3]); // bottom
 }
 
 // Corners return a simple array [left, top, right, bottom] for the top and bottom rect.
 function getObstacleCorners(obst) {
-  var halfWidth = state.obstacle.halfWidth;
+  var halfWidth = parameters.obstacle.halfWidth;
   
   return {
     top: [obst.x - halfWidth, 0, obst.x + halfWidth, obst.holePos*h - obst.holeSize/2],
